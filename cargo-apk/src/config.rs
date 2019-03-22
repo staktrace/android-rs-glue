@@ -19,6 +19,8 @@ pub struct AndroidConfig {
     pub ndk_path: PathBuf,
     /// How to invoke `gradle`.
     pub gradle_command: String,
+    /// Local dir holding dependencies
+    pub flatdir_path: Option<String>,
 
     /// Name that the package will have on the Android machine.
     /// This is the key that Android uses to identify your package, so it should be unique for
@@ -128,6 +130,8 @@ pub fn load(workspace: &Workspace, flag_package: &Option<String>) -> Result<Andr
                     the $ANDROID_HOME environment variable.")
     };
 
+    let flatdir_path = env::var("CARGO_APK_GRADLE_FLATDIR").ok();
+
     // Find the highest build tools.
     let build_tools_version = {
         let mut dir = fs::read_dir(Path::new(&sdk_path).join("build-tools"))
@@ -164,6 +168,7 @@ pub fn load(workspace: &Workspace, flag_package: &Option<String>) -> Result<Andr
         sdk_path: Path::new(&sdk_path).to_owned(),
         ndk_path: Path::new(&ndk_path).to_owned(),
         gradle_command: gradle_command,
+        flatdir_path: flatdir_path,
         package_name: manifest_content.as_ref().and_then(|a| a.package_name.clone())
                                        .unwrap_or_else(|| format!("rust.{}", package_name)),
         project_name: package_name.clone(),

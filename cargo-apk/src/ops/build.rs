@@ -578,6 +578,12 @@ fn create_dir_symlink(src_path: &Path, dst_path: &Path) -> io::Result<()> {
 }
 
 fn build_build_gradle_root(_: &Workspace, path: &Path, config: &AndroidConfig) -> Result<(), CargoError> {
+    let repository = if let Some(ref p) = config.flatdir_path {
+        format!("flatdir {{ dirs '{}' }}", p)
+    } else {
+        "jcenter()".to_string()
+    };
+
     let file = path.join("build.gradle");
     //if fs::metadata(&file).is_ok() { return; }
     let mut file = File::create(&file).unwrap();
@@ -585,7 +591,7 @@ fn build_build_gradle_root(_: &Workspace, path: &Path, config: &AndroidConfig) -
     write!(file, r#"
 buildscript {{
     repositories {{
-        jcenter()
+        {repository}
     }}
     dependencies {{
         classpath 'com.android.tools.build:gradle:2.3.3'
@@ -593,14 +599,15 @@ buildscript {{
 }}
 allprojects {{
     repositories {{
-        jcenter()
+        {repository}
     }}
 }}
 ext {{
     compileSdkVersion = {android_version}
     buildToolsVersion = "{build_tools_version}"
 }}
-"#, android_version = config.android_version,
+"#, repository = &repository,
+    android_version = config.android_version,
     build_tools_version = config.build_tools_version)?;
     Ok(())
 }
